@@ -23,6 +23,7 @@ public class SliceManager {
 	private int sliceTotalNumber; // total number of slices
 	private int slicesize;
 	private int chopmode;
+	private int minslicesize;
 	
 	private String finalResultOutputFile;
 	private String finalResultErrFile;
@@ -56,7 +57,7 @@ public class SliceManager {
 	}
 	
 	private void initSlicelist() throws Exception{
-		this.sliceTotalNumber=SliceManager.slicing(inputfn, workdir, prefix, slicesize, chopmode);
+		this.sliceTotalNumber=SliceManager.slicing(inputfn, workdir, prefix, slicesize, chopmode, minslicesize);
 		if(this.sliceTotalNumber<1) throw new Exception("There is no slice for parallel computing analysis. Check your input file.");
 		slicelist=new Slice[this.sliceTotalNumber];  
 		for(int i=0;i<this.sliceTotalNumber;i++){
@@ -99,11 +100,11 @@ public class SliceManager {
 			slicesize = slicesize / minslicesize * minslicesize;
 		else
 			slicesize = minslicesize;
-		SliceManager sm = new SliceManager(uniqueprefix, inputfn, tmpworkdir, slicesize, chopmode, groupmode, slicesort);
+		SliceManager sm = new SliceManager(uniqueprefix, inputfn, tmpworkdir, slicesize, chopmode, groupmode, slicesort, minslicesize);
 		return sm;
 	}
 
-	public SliceManager(String uniqueprefix, String inputfn, String workdir, int slicesize, int chopmode, boolean groupmode, String slicesort) throws Exception {
+	public SliceManager(String uniqueprefix, String inputfn, String workdir, int slicesize, int chopmode, boolean groupmode, String slicesort, int minslicesize) throws Exception {
 		this.prefix = uniqueprefix;
 		this.inputfn = inputfn;  //input file name
     	this.workdir = workdir;
@@ -111,6 +112,7 @@ public class SliceManager {
     	this.chopmode = chopmode;
 		this.groupmode = groupmode;
 		this.slicesort = slicesort;
+		this.minslicesize = minslicesize;
 
 		this.finalResultOutputFile = inputfn + Slice.OUTPUT_FILE_SUFFIX;
 		this.finalResultErrFile = inputfn + Slice.ERROR_FILE_SUFFIX;
@@ -233,7 +235,7 @@ public class SliceManager {
 	
 
 	//return the total number of slices
-	public static int slicing(String inputfilename, String workdir, String prefix, int slicesize, int chopmode) throws Exception {
+	public static int slicing(String inputfilename, String workdir, String prefix, int slicesize, int chopmode, int minslicesize) throws Exception {
 
 		File fworkdir = new File(workdir);
 		if (fworkdir.exists() && !fworkdir.isDirectory()) fworkdir.delete();
@@ -269,7 +271,8 @@ public class SliceManager {
 		if (out != null) out.close();
 		in.close();
         //the folllowing enhancement make sure any slice is larger than min slize size
-		if(cursliceid>=1&&lastfileslicesize<slicesize){
+		if(cursliceid>=1&&lastfileslicesize<minslicesize){
+			System.out.println("Merge the last two slices to comply minslicesize");
 			String lastslicefn = Slice.makeSlicefn(workdir, prefix, cursliceid);
 			BufferedWriter sliceout =  new BufferedWriter(new FileWriter(Slice.makeSlicefn(workdir, prefix, cursliceid-1), true));
 			BufferedReader slicein = new BufferedReader(new FileReader(lastslicefn));
