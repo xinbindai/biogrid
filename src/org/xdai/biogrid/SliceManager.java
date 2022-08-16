@@ -243,6 +243,7 @@ public class SliceManager {
 		BufferedWriter out = null;
 		int cursliceid = 0;
         int curseqnumber = 0;
+		int lastfileslicesize=0;
         Pattern pempty = Pattern.compile("^\\s*$");
 		
 		while (true) {
@@ -258,13 +259,32 @@ public class SliceManager {
 				if (out != null) out.close();
 				cursliceid=curseqnumber/slicesize;
 				out = new BufferedWriter(new FileWriter(Slice.makeSlicefn(workdir, prefix, cursliceid)));
+		        lastfileslicesize=0;
 			}
 			if(chopmode == LINE) seq=seq+"\n";
 			out.write(seq);
+		    lastfileslicesize++;
 			curseqnumber++;
 		}
 		if (out != null) out.close();
 		in.close();
+        //the folllowing enhancement make sure any slice is larger than min slize size
+		if(cursliceid>=1&&lastfileslicesize<slicesize){
+			String lastslicefn = Slice.makeSlicefn(workdir, prefix, cursliceid);
+			BufferedWriter sliceout =  new BufferedWriter(new FileWriter(Slice.makeSlicefn(workdir, prefix, cursliceid-1), true));
+			BufferedReader slicein = new BufferedReader(new FileReader(lastslicefn));
+			while(true){
+                String tmp = slicein.readLine();
+				if(tmp == null) break;
+				sliceout.write(tmp+"\n");
+			}
+			if(sliceout!=null) sliceout.close();
+			slicein.close();
+			boolean res = new File(lastslicefn).delete();
+			if(!res) throw new Exception("Failed to delete "+lastslicefn);
+			cursliceid--;
+		}
+
 		return cursliceid+1;
 	}
 

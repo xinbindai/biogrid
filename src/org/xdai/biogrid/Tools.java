@@ -52,7 +52,7 @@ public class Tools {
 	} // end of function
 	
 	static String getSSHoption(){
-		String opts=" -o PasswordAuthentication=no -o StrictHostKeyChecking=no -o ConnectTimeout=2 ";
+		String opts=" -q -o PasswordAuthentication=no -o StrictHostKeyChecking=no -o ConnectTimeout=2 ";
 		return opts;
 	}
 	
