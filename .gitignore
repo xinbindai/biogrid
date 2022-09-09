@@ -4,9 +4,9 @@
 .mtj.tmp/
 *.class
 #*.jar
-*.war
-*.ear
-*.nar
+#*.war
+#*.ear
+#*.nar
 hs_err_pid*
 
 ##############################
