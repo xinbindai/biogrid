@@ -1,26 +1,42 @@
 package org.xdai.biogrid;
 
-import java.io.BufferedReader;
+//import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileReader;
+//import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
-import java.util.AbstractMap;
+//import java.util.AbstractMap;
 import java.util.ArrayList;
-import java.util.Map;
-import java.net.InetAddress;
+import java.util.Arrays;
+//import java.util.Map;
+//import java.net.InetAddress;
 import java.net.NetworkInterface;
 import java.net.SocketException;
-import java.net.UnknownHostException;
+//import java.net.UnknownHostException;
 import java.util.Enumeration;
 
 public class Tools {
 	static int mypid = 0;
 	static String prefix = null;
 	static String[] myips = null;
+
+
+    static String[] mergeStringArray(String[] arrOne,  String[] arrTwo){
+		String[] arrThree = new String[arrOne.length + arrTwo.length];
+		int index = arrOne.length;
+		
+		for (int i = 0; i < arrOne.length; i++) {
+			arrThree[i] = arrOne[i];
+		}
+		for (int i = 0; i < arrTwo.length; i++) {
+			arrThree[i + index] = arrTwo[i];    
+		}
+        return arrThree;   //arrThree == arrOne + arrTwo
+	}
+
 
 	static String getFileContent(String filename) {
 		StringBuffer sb = new StringBuffer();
@@ -50,22 +66,53 @@ public class Tools {
 	static int getLocalProcessors() {
 		return Runtime.getRuntime().availableProcessors();
 	} // end of function
-	
+
+	/*
 	static String getSSHoption(){
 		String opts=" -q -o PasswordAuthentication=no -o StrictHostKeyChecking=no -o ConnectTimeout=2 ";
 		return opts;
+	}*/
+
+	public static ArrayList<String> makeCmdHeader(Boolean isLocalhost, String username, String hostname, String[] ssh_parameters){
+		/* generate command header for SSH access or localhost calling */
+
+		ArrayList<String> tmpcmd = new ArrayList<String>();
+		if (isLocalhost) {
+			tmpcmd.add("bash");
+			tmpcmd.add("-c");
+		} else{
+			tmpcmd.add("ssh");
+		    if(ssh_parameters!=null&&ssh_parameters.length>0) {
+				tmpcmd.addAll(Arrays.asList(ssh_parameters));
+			}
+		    String wholeuser = null;
+		    if(username!=null&&!username.equals("")) wholeuser = username + "@" + hostname;
+		    else wholeuser = hostname;
+			tmpcmd.add(wholeuser);
+		}
+
+		//String[] tmpcmdarray =  new String[tmpcmd.size()];
+		//tmpcmd.toArray(tmpcmdarray);
+		//System.out.println(String.join(" ", tmpcmdarray));
+
+		return tmpcmd;
 	}
-	
-	static int getRemoteProcessors(String hostname) {
-		String cmd = "ssh" + getSSHoption() + hostname + " nproc";
-		String[] tmpcmd = { "bash", "-c", cmd };
-		ProcessRet ret=RunProcess.runcmd(tmpcmd, 3000);
+
+
+	static int getRemoteProcessors(String hostname, String username, String[] ssh_parameters) {
+		ArrayList<String> tmpcmd = makeCmdHeader(false, username, hostname, ssh_parameters);
+		tmpcmd.add("nproc");
+		String[] cmd_array = new String[tmpcmd.size()];
+		tmpcmd.toArray(cmd_array);
+        //System.err.println(String.join(" ",cmd_array));
+		ProcessRet ret=RunProcess.runcmd(cmd_array, 3000);
 		String pid = ret.stdout.replaceAll("[^0-9]", "");
 		int nprocs=0;
 		try{   nprocs=Integer.parseInt(pid); }
 		catch(Exception e) { }
 		return nprocs; 
 	} // end of function
+
 
 	static int getMyPID() {
 		if (mypid > 0)
@@ -86,6 +133,7 @@ public class Tools {
 
 	public static String LOCALHOSTIP="127.0.0.1"; 
 	
+	/*
 	static ArrayList<Map.Entry<String, Integer>> readNodeThreads(String filename, double cpufactor) {
 		ArrayList<Map.Entry<String, Integer>> v = new ArrayList<Map.Entry<String, Integer>>();
 		if (filename == null || filename.equals("")) {
@@ -148,7 +196,7 @@ public class Tools {
 			}
 		}
         return v;
-	} // end of function
+	} */
 
 	static String getMyAddress() {
 		String cmd[] = { "bash", "-c", "hostname" };

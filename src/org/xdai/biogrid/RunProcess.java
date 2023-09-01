@@ -5,6 +5,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.ArrayList;
 
 public class RunProcess {
 
@@ -111,10 +112,24 @@ public class RunProcess {
     	init0(cmd,null,null);
     }
 
+    public RunProcess(ArrayList<String> cmdlist) {
+		String[] cmd = new String[cmdlist.size()];
+		cmdlist.toArray(cmd);
+    	init0(cmd,null,null);
+    }
+
+
 	public RunProcess(String[] cmd, String outfn, String errfn) {
 		init0(cmd,outfn,errfn);
 	}
-	
+
+    public RunProcess(ArrayList<String> cmdlist, String outfn, String errfn) {
+		String[] cmd = new String[cmdlist.size()];
+		cmdlist.toArray(cmd);
+    	init0(cmd, outfn, errfn);
+    }
+
+
 	private void init0(String[] cmd, String outfn, String errfn){
 		try{
 			init(cmd,outfn,errfn);

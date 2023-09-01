@@ -1,6 +1,7 @@
 package org.xdai.biogrid;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 
 public class SyncDirs {
 	
@@ -34,8 +35,11 @@ public class SyncDirs {
 
 				String makesyncdircmd = "tmpname="	+ dirs[i]
 						+ ";if [[ -e $tmpname && ! -d $tmpname ]]; then rm -f $tmpname;fi;if [[ ! -e $tmpname ]]; then mkdir -p $tmpname;fi; if [[ -e $tmpname && -d $tmpname ]]; then echo \"exists\";fi";
-				String tmpcmd[] = { "ssh", cn.getHostname(), makesyncdircmd };
-				ProcessRet retres=RunProcess.runcmd(tmpcmd, 3000);
+				ArrayList<String> tmpcmd = ComputingNode.makeCmdHeader(cn);
+				tmpcmd.add(makesyncdircmd);
+				String tmpcmdarray[] = new String[tmpcmd.size()];
+				tmpcmd.toArray(tmpcmdarray);
+				ProcessRet retres=RunProcess.runcmd(tmpcmdarray, 3000);
 				if(retres.retcode==Status.FAILED || retres.retcode==Status.FAILEDTORUN) {
 					   cn.disable=true;
 					   System.err.println();
@@ -44,8 +48,23 @@ public class SyncDirs {
 					   System.err.flush();
 					   continue;
 				}
-                // -a == -rlptgoD (no -H,-A,-X)
-				String tmpcmd2[] = { "rsync", "-rlpz", "--delete", "--timeout", "1800", "--exclude", "tmp", "--exclude", "/usr", dirs[i],	cn.getHostname() + ":" + dirs[i] };
+
+				// -a == -rlptgoD (no -H,-A,-X)
+				//String tmpcmd2[] = { "rsync", "-rlpz", "--delete", "--timeout", "1800", "--exclude", "tmp", "--exclude", "/usr", dirs[i],	cn.getHostname() + ":" + dirs[i] };
+				ArrayList<String> tmpcmd2 = new ArrayList<String>();
+				String[] rsyn_header = { "rsync", "-rlpz", "--delete", "--timeout", "1800", "--exclude", "tmp", "--exclude", "/usr" };
+				tmpcmd2.addAll(Arrays.asList(rsyn_header));
+				
+				ArrayList<String> sshcmd = ComputingNode.makeCmdHeader(cn);
+				String user_hostname = sshcmd.remove(sshcmd.size()-1);
+				String[] sshcmdarray = new String[sshcmd.size()];
+				sshcmd.toArray(sshcmdarray);
+				tmpcmd2.add("-e");
+				tmpcmd2.add(String.join(" ", sshcmdarray));
+	
+				tmpcmd2.add(dirs[i]);
+				tmpcmd2.add(user_hostname+":"+ dirs[i]);
+	
 				RunProcess myr = new RunProcess(tmpcmd2);
 				myr.setRelobj(cn);
 				prp.add(myr);

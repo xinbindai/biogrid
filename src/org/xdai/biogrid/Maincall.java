@@ -26,6 +26,7 @@ public class Maincall {
 				+ "[-o filename],    output file name. if omitted, output file will be slicingfile.out\n"
 				+ "[-O],             print STDOUT and STDERR instead of print to file specified by -o\n"
 				+ "[-n filename],    node filename. if the option is omitted, biogrid will only run on localhost\n\n"
+				+ "[-P options],     string, ssh client options. such as '-i rsakeyfle -p 2222'\n\n"
 				+ "[-r 1.0],         node factor, a float number larger than 0; It adjust final computing thread number for each node. default value = 1.0\n\n"
                 + "[-S sr],          Sort slice by sr: larger slice goes first(default), n: small slice number goes first\n"
 				+ "if CommandString is empty and -s & -n are specified, the biogrid will just synchronize with node computers\n";
@@ -58,8 +59,9 @@ public class Maincall {
 		boolean groupmode=false;
 		int maxFailedTimes=3;
         String slicesort="sr";
+		String ssh_parameters = "";
 
-		Getopt g = new Getopt("biogrid", args, "i:r:s:S:t:c:p:f:m:o:u:n:d::O::a::g::");
+		Getopt g = new Getopt("biogrid", args, "i:r:s:S:t:c:p:f:m:o:P:u:n:d::O::a::g::");
 		int c;
 		while ((c = g.getopt()) != -1) {
 			switch (c) {
@@ -145,6 +147,9 @@ public class Maincall {
 			case 'o':
 				outputfile = g.getOptarg();
 				break;
+    		case 'P':
+				ssh_parameters = g.getOptarg();
+				break;
 			case 'n':
 				nodeconfigfn = g.getOptarg();
 				break;
@@ -175,7 +180,7 @@ public class Maincall {
 		System.err.print("Initial nodes based on node config file "+nodeconfigfn+" ......");
 
 		//check and initial nodes, threads number,sync and prepare workdir....... 
-		MasterNode mn = MasterNode.MasterNodeFactory(nodeconfigfn, nodefactor, tmpworkdir, syncdirs, allowfilesync, cmd, slicingPosParamter, maxFailedTimes);
+		MasterNode mn = MasterNode.MasterNodeFactory(nodeconfigfn, nodefactor, tmpworkdir, syncdirs, allowfilesync, cmd, slicingPosParamter, maxFailedTimes, ssh_parameters);
         //if no command, only sync/makeworkdir and return
 		if (cmd.equals("")) {
 			for(ComputingNode cn: mn.getComputingnodes()) cn.deleteWorkdir();

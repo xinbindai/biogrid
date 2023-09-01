@@ -1,5 +1,7 @@
 package org.xdai.biogrid;
 
+import java.util.ArrayList;
+
 public class ComputingThread implements Runnable {
 
 	static String PROCESSORSNUMBER = "`cat /proc/cpuinfo|grep ^processor|wc -l`";
@@ -68,10 +70,25 @@ public class ComputingThread implements Runnable {
 	public void runcmd() {
 		// transfer slice-running file to remote machine
 		if (!this.computingnode.isLocalhost()) {  //,"-o", "ConnectTimeout=3"
-			String tmpcmd[] = { "scp", this.curslice.getSlicefn(),	computingnode.getHostname() + ":" + this.computingnode.getWorkdir() + "/" };
+			//String tmpcmd[] = { "scp", this.curslice.getSlicefn(),	computingnode.getHostname() + ":" + this.computingnode.getWorkdir() + "/" };
 			//String tmpcmd[] = { "bash", "-c", "sleep 1;scp " + this.curslice.getSlicefn()+" "+computingnode.getHostname() + ":" + this.computingnode.getWorkdir() + "/" };
 			//String tmpcmd[] = { "rsync", "-az", "-e", "ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null", this.curslice.getSlicefn(),	computingnode.getHostname() + ":" + this.computingnode.getWorkdir() + "/" };
 			//rsync -avz -e "ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null"
+			
+			ArrayList<String> tmpcmd = new ArrayList<String>();
+			tmpcmd.add("rsync");
+			tmpcmd.add("-az");
+			tmpcmd.add("-e");
+			
+			ArrayList<String> sshcmd = ComputingNode.makeCmdHeader(this.computingnode);
+			String user_hostname = sshcmd.remove(sshcmd.size()-1);
+			String[] sshcmdarray = new String[sshcmd.size()];
+			sshcmd.toArray(sshcmdarray);
+            tmpcmd.add(String.join(" ", sshcmdarray));
+
+			tmpcmd.add(this.curslice.getSlicefn());
+			tmpcmd.add(user_hostname+":"+this.computingnode.getWorkdir() + "/");
+
 			rp=new RunProcess(tmpcmd);
 			ProcessRet ret = rp.getRet(3600000);
 			if (ret.retcode!=Status.FINISHED) {
@@ -91,29 +108,27 @@ public class ComputingThread implements Runnable {
 		String cmdlist[] = cmd.split("[ \t]+");
 		cmdlist[this.slicepos] =  curslice.getSlicefn();
 		
-		String[] tmpcmd=new String[3];
+		//String[] tmpcmd=new String[3];
+		String[] cmdarray = null;
 		if (this.computingnode.isLocalhost()) {
 			//tmpcmd[0] = "bash";
 			//tmpcmd[1] = "-c";
-			tmpcmd = cmdlist;
+			cmdarray = cmdlist;
 		}else{
-		    String finalcmd = "";
-		    for (int i = 0; i < cmdlist.length; i++) {
-			    //if (cmdlist[i].equals("PROCESSORSNUMBER"))
-    	 		//sfinalcmd = finalcmd + " " + ComputingThread.PROCESSORSNUMBER;
-		    	//else
-			    finalcmd = finalcmd + " " + cmdlist[i];
-		    }
-		    //if (!this.computingnode.isLocalhost()) {
+		    String finalcmd = String.join(" ", cmdlist);
 			finalcmd = finalcmd + ";ret=$?;rm -f " + curslice.getSlicefn()	+ ";exit $ret";
-		    //}
-		    tmpcmd[0] = "ssh";
-		    tmpcmd[1] = computingnode.getHostname();
-		    tmpcmd[2] = finalcmd;
+            ArrayList<String> tmpcmd = ComputingNode.makeCmdHeader(this.computingnode);
+		    tmpcmd.add(finalcmd);
+			cmdarray = new String[tmpcmd.size()];
+            tmpcmd.toArray(cmdarray);
+			//System.out.println(String.join(" " , cmdarray));
+			//tmpcmd[0] = "ssh";
+		    //tmpcmd[1] = computingnode.getHostname();
+		    //tmpcmd[2] = finalcmd;
 		}
 		
 		// then run command
-		rp=new RunProcess(tmpcmd, curslice.getOutputfn(), curslice.getErrorfn());
+		rp=new RunProcess(cmdarray, curslice.getOutputfn(), curslice.getErrorfn());
 		ProcessRet ret = rp.getRet();
 		if(ret.retcode == Status.FINISHED) {
   		    curslice.getSm().updateAveragetime(System.currentTimeMillis()-starttime);
