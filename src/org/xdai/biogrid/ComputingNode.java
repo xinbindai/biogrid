@@ -70,7 +70,7 @@ public class ComputingNode {
 		String[] cmd_array = new String[tmpcmd.size()];
 		tmpcmd.toArray(cmd_array);
 
-		ProcessRet ret = RunProcess.runcmd(cmd_array,3000);
+		ProcessRet ret = RunProcess.runcmd(cmd_array, RunProcess.MAXTIMEINMILLISECONDS);
 		if(ret.retcode!=Status.FINISHED) {
 			System.err.println();
 			System.err.println("Failed to create tmpworkdir in computing host (" + hostname + "), disable it! Below is error message: ");

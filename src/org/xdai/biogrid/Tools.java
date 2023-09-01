@@ -105,7 +105,7 @@ public class Tools {
 		String[] cmd_array = new String[tmpcmd.size()];
 		tmpcmd.toArray(cmd_array);
         //System.err.println(String.join(" ",cmd_array));
-		ProcessRet ret=RunProcess.runcmd(cmd_array, 3000);
+		ProcessRet ret=RunProcess.runcmd(cmd_array, RunProcess.MAXTIMEINMILLISECONDS);
 		String pid = ret.stdout.replaceAll("[^0-9]", "");
 		int nprocs=0;
 		try{   nprocs=Integer.parseInt(pid); }

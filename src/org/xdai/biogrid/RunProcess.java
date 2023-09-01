@@ -11,6 +11,7 @@ public class RunProcess {
 
 	public static int STDOUT = 1;
 	public static int STDERR = 2;
+	public static long MAXTIMEINMILLISECONDS = 3000;
 
 	//public static int RUNNING = 1;
 	//public static int FINISHED = 0;
@@ -194,7 +195,7 @@ public class RunProcess {
 		    long tmpelapsedtime=System.currentTimeMillis()-starttime;
             if(tmpelapsedtime>maxtimeInmilliseconds) break;
             
-		    try{ Thread.sleep(1); }catch(Exception e){}
+		    try{ Thread.sleep(100); }catch(Exception e){}
 		}
 		return terminated;
     }
@@ -229,7 +230,7 @@ public class RunProcess {
 				    Thread.sleep(1);
 				}
 
-  		    	if(!waitforinmsec(3000)){  //if process is not terminated in 3000 milliseconds
+  		    	if(!waitforinmsec(maxtimeInmilliseconds)){  //if process is not terminated in milliseconds
   	                try { process.destroy(); } catch(Exception e) {}
   	                message = message+"The process '"+cmdstr+"' has been killed because it failed to exit in time\n";
   		    	}  		    	

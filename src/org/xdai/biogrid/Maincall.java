@@ -16,6 +16,7 @@ public class Maincall {
 				+ "[-a],             allow sync single file using -s option; in this case, syndir1, syncdir2 can be file full path name\n"
 				+ "[-g],             group mode, the first line of each slice should be like '#groupID=1234' (the number range: from 0 to slicenumber-1)\n"
 				+ "[-t tmpworkdir],  tmp working directory, default is /tmp/biogrid/xxxxxxx_xxxx\n"
+				+ "[-T 3000],        milliseconds for SSH command to timeout, default=3000. A value <=0 may cause application to wait forever. The SSH commands inlcudes: 1) precheck # of cpus, 2) mkdir tmp dir and 3) rsync data\n"
 				+ "[-c fasta|line],  chopping mode, how to slice input file, default is fasta(by '> 'or '#'), line mode will skip blank line.\n"
 				+ "[-d],             delete the tmp working folder after finishing if specify it\n"
 				+ "[-p 1],           position of slice parameter in command string, start from 1, default is 1\n"
@@ -61,7 +62,7 @@ public class Maincall {
         String slicesort="sr";
 		String ssh_parameters = "";
 
-		Getopt g = new Getopt("biogrid", args, "i:r:s:S:t:c:p:f:m:o:P:u:n:d::O::a::g::");
+		Getopt g = new Getopt("biogrid", args, "i:r:s:S:t:T:c:p:f:m:o:P:u:n:d::O::a::g::");
 		int c;
 		while ((c = g.getopt()) != -1) {
 			switch (c) {
@@ -98,6 +99,15 @@ public class Maincall {
 				}
 				if (slicingPosParamter < 1)
 					slicingPosParamter = 1;
+				break;
+		    case 'T':
+			    //milliseconds for SSH command timeout
+				try {
+					RunProcess.MAXTIMEINMILLISECONDS = Long.parseLong(g.getOptarg());
+				} catch (Exception ex) {
+					System.err.println("Invalid [-T] milliseconds for SSH command timeout, should be long integer format(default value: 3000). A value <=0 may cause application to wait forever.");
+					return;
+				}
 				break;
 			case 'i':
 				try {

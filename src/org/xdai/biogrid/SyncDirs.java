@@ -39,7 +39,7 @@ public class SyncDirs {
 				tmpcmd.add(makesyncdircmd);
 				String tmpcmdarray[] = new String[tmpcmd.size()];
 				tmpcmd.toArray(tmpcmdarray);
-				ProcessRet retres=RunProcess.runcmd(tmpcmdarray, 3000);
+				ProcessRet retres=RunProcess.runcmd(tmpcmdarray, RunProcess.MAXTIMEINMILLISECONDS);
 				if(retres.retcode==Status.FAILED || retres.retcode==Status.FAILEDTORUN) {
 					   cn.disable=true;
 					   System.err.println();
