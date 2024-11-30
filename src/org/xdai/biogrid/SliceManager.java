@@ -233,6 +233,17 @@ public class SliceManager {
 		return isAvailable;
 	}
 	
+	public boolean hasFailedSlice() {
+		boolean isAvailable=false;
+		for(int i=0;i<slicelist.length;i++){
+        	if(slicelist[i].getStatus()==Status.FAILED) {
+        		isAvailable=true;
+        		break;
+        	} 
+        }
+		return isAvailable;
+	}
+
 
 	//return the total number of slices
 	public static int slicing(String inputfilename, String workdir, String prefix, int slicesize, int chopmode, int minslicesize) throws Exception {

@@ -14,6 +14,7 @@ public class Maincall {
 		String prompt = "Usage: biogrid [-s value] [-t value] [-d] [-p value] [-f value] [-c fasta|line] [-m value] [-o value] [-n value] CommandString\n\n"
 				+ "[-s syncdir1:syncdir2], directories for sync, separated by ':'\n"
 				+ "[-a],             allow sync single file using -s option; in this case, syndir1, syncdir2 can be file full path name\n"
+				+ "[-e],             exitOnFailedSlice, if any computing slice fails, whole task will immediately fail with exit code -2\n"
 				+ "[-g],             group mode, the first line of each slice should be like '#groupID=1234' (the number range: from 0 to slicenumber-1)\n"
 				+ "[-t tmpworkdir],  tmp working directory, default is /tmp/biogrid/xxxxxxx_xxxx\n"
 				+ "[-T 3000],        milliseconds for SSH command to timeout, default=3000. A value <=0 may cause application to wait forever. The SSH commands inlcudes: 1) precheck # of cpus, 2) mkdir tmp dir and 3) rsync data\n"
@@ -55,6 +56,7 @@ public class Maincall {
 		String outputfile = "";
 		String nodeconfigfn = "";
 		double nodefactor=1.0;
+		boolean exitOnFailedSlice=false;
 		boolean printStdout = false;
 		boolean allowfilesync = false;
 		boolean groupmode=false;
@@ -62,10 +64,13 @@ public class Maincall {
         String slicesort="sr";
 		String ssh_parameters = "";
 
-		Getopt g = new Getopt("biogrid", args, "i:r:s:S:t:T:c:p:f:m:o:P:u:n:d::O::a::g::");
+		Getopt g = new Getopt("biogrid", args, "i:r:s:S:t:T:c:p:f:m:o:P:u:n:d::O::a::g::e::");
 		int c;
 		while ((c = g.getopt()) != -1) {
 			switch (c) {
+		    case 'e':
+				exitOnFailedSlice = true;
+				break;
 			case 's':
 				syncdirs = g.getOptarg();
 				//syncdirs = syncdirs.replaceAll("/+$", "");
@@ -216,6 +221,12 @@ public class Maincall {
 		ProgressMeter pm = new ProgressMeter(mn, sm);
 		long time2 = System.currentTimeMillis();
 		while(sm.hasReadySlice()||sm.hasRunningSlice()) { 	//System.err.print("Step 1="+System.currentTimeMillis());
+
+		    if(exitOnFailedSlice&&sm.hasFailedSlice()){
+				System.err.println("ERROR: Some computing slices failed, abort......");
+				exitvalue = -2;
+				break;
+			}
 			if (!mn.dispatch(sm)) {   //dispatching......., if not at-Least-One-Node-Is-Active-or-!disable, abort.
 				System.err.println("ERROR: All computing nodes are inactive, abort......");
 				exitvalue = -1;
@@ -225,6 +236,7 @@ public class Maincall {
 			if(secs%10==0)   MasterNode.killStuckJobs(mn, sm, uplimitrunningtime);    //kill stuck jobs every 10 seconds
 			if(secs%120==0)  MasterNode.ActivateAllComputingThreads(mn);
 			if(secs%5==0)   pm.printall();
+			Thread.sleep(200);
 		}
 		if (exitvalue != 0)	System.exit(exitvalue);
 		pm.printall();
